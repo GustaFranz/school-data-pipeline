@@ -1,0 +1,199 @@
+# Bloqueia commits com Co-authored-by não autorizado.
+# Liberação manual (sempre): label "allow-coauthors" no PR.
+# Sem esse label, o check falha. Em push direto sem PR, só passa
+# reescrevendo o commit (sem override automático).
+name: Coauthor Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+  push:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  block-foreign-coauthors:
+    runs-on: ubuntu-latest
+    env:
+      ALLOWED_EMAILS: "196722369+GustaFranz@users.noreply.github.com"
+      ALLOWED_LOGINS: "GustaFranz"
+      MANUAL_OVERRIDE_LABEL: "allow-coauthors"
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate co-authors
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          normalize_list() {
+            echo "$1" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed '/^$/d'
+          }
+
+          mapfile -t allowed_emails < <(normalize_list "${ALLOWED_EMAILS}")
+          mapfile -t allowed_logins < <(normalize_list "${ALLOWED_LOGINS}")
+
+          is_allowed_email() {
+            local email_lc
+            email_lc="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
+            for a in "${allowed_emails[@]}"; do
+              if [[ "$email_lc" == "$(echo "$a" | tr '[:upper:]' '[:lower:]')" ]]; then
+                return 0
+              fi
+            done
+            return 1
+          }
+
+          is_allowed_login() {
+            local login_lc
+            login_lc="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
+            for a in "${allowed_logins[@]}"; do
+              if [[ "$login_lc" == "$(echo "$a" | tr '[:upper:]' '[:lower:]')" ]]; then
+                return 0
+              fi
+            done
+            return 1
+          }
+
+          get_commits_range() {
+            if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+              local base_sha head_sha
+              base_sha="${{ github.event.pull_request.base.sha }}"
+              head_sha="${{ github.event.pull_request.head.sha }}"
+              echo "${base_sha}..${head_sha}"
+            else
+              local before after
+              before="${{ github.event.before }}"
+              after="${{ github.sha }}"
+              if [[ "$before" == "0000000000000000000000000000000000000000" ]]; then
+                echo "${after}~50..${after}"
+              else
+                echo "${before}..${after}"
+              fi
+            fi
+          }
+
+          pr_has_override_label() {
+            if [[ "${GITHUB_EVENT_NAME}" != "pull_request" ]]; then
+              return 1
+            fi
+            local pr_number labels
+            pr_number="${{ github.event.pull_request.number }}"
+            labels="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${pr_number}/labels" --jq '.[].name')"
+            while IFS= read -r label; do
+              [[ -z "$label" ]] && continue
+              if [[ "$label" == "${MANUAL_OVERRIDE_LABEL}" ]]; then
+                return 0
+              fi
+            done <<< "$labels"
+            return 1
+          }
+
+          comment_on_pr() {
+            local body="$1"
+            if [[ "${GITHUB_EVENT_NAME}" != "pull_request" ]]; then
+              return 0
+            fi
+            local pr_number marker
+            pr_number="${{ github.event.pull_request.number }}"
+            marker="<!-- coauthor-guard -->"
+            # Evita spam: só comenta se ainda não houver comentário do bot
+            if gh api "repos/${GITHUB_REPOSITORY}/issues/${pr_number}/comments" --jq '.[].body' \
+              | grep -Fq "$marker"; then
+              return 0
+            fi
+            gh api "repos/${GITHUB_REPOSITORY}/issues/${pr_number}/comments" \
+              -f body="${marker}
+${body}" >/dev/null
+          }
+
+          RANGE="$(get_commits_range)"
+          echo "Checking commit range: ${RANGE}"
+
+          if ! git rev-parse --verify "$(echo "$RANGE" | cut -d. -f1)" >/dev/null 2>&1; then
+            echo "Base commit not available locally, fetching..."
+            git fetch --all --prune --tags
+          fi
+
+          mapfile -t commits < <(git rev-list "$RANGE" 2>/dev/null || true)
+
+          if [[ "${#commits[@]}" -eq 0 ]]; then
+            echo "No commits found in range. Nothing to validate."
+            exit 0
+          fi
+
+          violations=0
+          violation_lines=()
+
+          for c in "${commits[@]}"; do
+            msg="$(git log -1 --pretty=%B "$c")"
+            while IFS= read -r line; do
+              if [[ "$line" =~ ^Co-authored-by:[[:space:]]*(.+)[[:space:]]\<([^>]+)\>[[:space:]]*$ ]]; then
+                name="${BASH_REMATCH[1]}"
+                email="${BASH_REMATCH[2]}"
+
+                login_guess="$(echo "$email" | sed -n 's/^[0-9]\++\([^@]*\)@users\.noreply\.github\.com$/\1/p')"
+
+                allowed=false
+                if is_allowed_email "$email"; then
+                  allowed=true
+                elif [[ -n "${login_guess:-}" ]] && is_allowed_login "$login_guess"; then
+                  allowed=true
+                fi
+
+                if [[ "$allowed" == false ]]; then
+                  echo "::error title=Coautoria não permitida::Commit $c contém coautor não autorizado: '$name <$email>'"
+                  violation_lines+=("- \`$c\`: $name <$email>")
+                  violations=$((violations + 1))
+                else
+                  echo "Allowed co-author in commit $c: $name <$email>"
+                fi
+              fi
+            done <<< "$msg"
+          done
+
+          if [[ "$violations" -eq 0 ]]; then
+            echo "No unauthorized co-authors found."
+            exit 0
+          fi
+
+          echo "Found $violations unauthorized co-author entries."
+
+          if pr_has_override_label; then
+            echo "Manual override active (label '${MANUAL_OVERRIDE_LABEL}'). Allowing this run."
+            exit 0
+          fi
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            details="$(printf '%s\n' "${violation_lines[@]}")"
+            comment_on_pr "$(cat <<EOF
+## Coauthor Guard — coautoria bloqueada
+
+Encontrei **${violations}** entrada(s) \`Co-authored-by\` não autorizada(s):
+
+${details}
+
+### Como liberar (manual)
+
+1. Revise os commits acima.
+2. Se aceitar a coautoria, adicione o label \`${MANUAL_OVERRIDE_LABEL}\` neste PR.
+3. O check roda de novo e passa só com esse label.
+
+### Como corrigir (remover coautoria)
+
+Reescreva a mensagem do commit removendo a linha \`Co-authored-by\` e faça \`git push --force-with-lease\`.
+EOF
+)"
+          fi
+
+          echo "::error::Unauthorized co-authors found. Add label '${MANUAL_OVERRIDE_LABEL}' on the PR to approve manually, or rewrite commits to remove Co-authored-by."
+          exit 1
