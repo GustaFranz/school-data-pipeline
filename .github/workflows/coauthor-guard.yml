@@ -113,7 +113,7 @@ jobs:
             fi
             gh api "repos/${GITHUB_REPOSITORY}/issues/${pr_number}/comments" \
               -f body="${marker}
-${body}" >/dev/null
+          ${body}" >/dev/null
           }
 
           RANGE="$(get_commits_range)"
