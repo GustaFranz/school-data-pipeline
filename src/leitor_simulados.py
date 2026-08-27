@@ -20,6 +20,15 @@ def ler_simulados():
 
 
 def transformar_simulados_para_longo(tabela):
+        '''
+    Transforma a tabela do formato largo para o formato longo usando `melt()`.
+    As colunas "turma" e "aluno" são mantidas como identificadoras (`id_vars`).
+    As demais colunas são transformadas em linhas:
+    ==> `var_name="disciplina"` cria a coluna "disciplina", que armazena o nome
+      das colunas originais que foram transformadas.
+    ==> `value_name="nota_simulado"` cria a coluna "nota_simulado", que armazena
+      os valores que estavam nessas colunas originais.
+    '''
     return tabela.melt(
         id_vars=["turma", "aluno"],
         var_name="disciplina",
