@@ -1,7 +1,8 @@
 from pathlib import Path
-
 import pandas as pd
 import pdfplumber
+from src.validacao import validar_tabela_longa
+
 
 
 pasta_projeto = Path(__file__).resolve().parent.parent
@@ -26,7 +27,7 @@ def ler_um_pdf(caminho_pdf):
 
 
 def ler_projetos():
-    arquivos = list(pasta_projetos.glob("projeto_*.pdf"))
+    arquivos = sorted(pasta_projetos.glob("projeto_*.pdf"))
     tabelas = []
 
     for arquivo in arquivos:
@@ -42,15 +43,21 @@ def ler_projetos():
 def transformar_projetos_para_longo(tabela):
     tabela = tabela.rename(columns={"Turma": "turma", "Aluno": "aluno"})
 
-    return tabela.melt(
+    tabela_longa = tabela.melt(
         id_vars=["turma", "aluno"],
         var_name="disciplina",
         value_name="nota_projeto",
     )
 
+    return validar_tabela_longa(
+        tabela_longa,
+        fonte="projetos",
+        nota_col="nota_projeto",
+        minimo=0,
+        maximo=5,
+    )
 
 if __name__ == "__main__":
     projetos = ler_projetos()
     projetos_longos = transformar_projetos_para_longo(projetos)
     print(projetos_longos.head())
-    
