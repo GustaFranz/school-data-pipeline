@@ -1,7 +1,5 @@
 from pathlib import Path
-
 import pandas as pd
-
 
 pasta_projeto = Path(__file__).resolve().parent.parent
 pasta_provas = pasta_projeto / "dados" / "provas"
