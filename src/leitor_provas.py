@@ -1,14 +1,13 @@
 from pathlib import Path
-
 import pandas as pd
-
+from src.validacao import validar_tabela_longa
 
 pasta_projeto = Path(__file__).resolve().parent.parent
 pasta_provas = pasta_projeto / "dados" / "provas"
 
 
 def ler_provas():
-    arquivos = list(pasta_provas.glob("provas_*.xlsx"))
+    arquivos = sorted(pasta_provas.glob("provas_*.xlsx"))
     tabelas = []
 
     for arquivo in arquivos:
@@ -22,10 +21,18 @@ def ler_provas():
 
 
 def transformar_provas_para_longo(tabela):
-    return tabela.melt(
+    tabela_longa = tabela.melt(
         id_vars=["turma", "aluno"],
         var_name="disciplina",
         value_name="nota_prova",
+    )
+
+    return validar_tabela_longa(
+        tabela_longa,
+        fonte="provas",
+        nota_col="nota_prova",
+        minimo=0,
+        maximo=10,
     )
 
 
