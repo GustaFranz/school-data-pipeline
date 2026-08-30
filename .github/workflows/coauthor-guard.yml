@@ -113,7 +113,7 @@ jobs:
             fi
             gh api "repos/${GITHUB_REPOSITORY}/issues/${pr_number}/comments" \
               -f body="${marker}
-${body}" >/dev/null
+          ${body}" >/dev/null
           }
 
           RANGE="$(get_commits_range)"
@@ -176,23 +176,23 @@ ${body}" >/dev/null
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
             details="$(printf '%s\n' "${violation_lines[@]}")"
             comment_on_pr "$(cat <<EOF
-## Coauthor Guard — coautoria bloqueada
+          ## Coauthor Guard — coautoria bloqueada
 
-Encontrei **${violations}** entrada(s) \`Co-authored-by\` não autorizada(s):
+          Encontrei **${violations}** entrada(s) \`Co-authored-by\` não autorizada(s):
 
-${details}
+          ${details}
 
-### Como liberar (manual)
+          ### Como liberar (manual)
 
-1. Revise os commits acima.
-2. Se aceitar a coautoria, adicione o label \`${MANUAL_OVERRIDE_LABEL}\` neste PR.
-3. O check roda de novo e passa só com esse label.
+          1. Revise os commits acima.
+          2. Se aceitar a coautoria, adicione o label \`${MANUAL_OVERRIDE_LABEL}\` neste PR.
+          3. O check roda de novo e passa só com esse label.
 
-### Como corrigir (remover coautoria)
+          ### Como corrigir (remover coautoria)
 
-Reescreva a mensagem do commit removendo a linha \`Co-authored-by\` e faça \`git push --force-with-lease\`.
-EOF
-)"
+          Reescreva a mensagem do commit removendo a linha \`Co-authored-by\` e faça \`git push --force-with-lease\`.
+          EOF
+          )"
           fi
 
           echo "::error::Unauthorized co-authors found. Add label '${MANUAL_OVERRIDE_LABEL}' on the PR to approve manually, or rewrite commits to remove Co-authored-by."
