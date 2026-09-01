@@ -12,7 +12,7 @@ def main():
     salvar_relatorio_final(notas)
 
     print("Gerando boletins...")
-    gerar_boletins()
+    gerar_boletins(notas)
 
     print("Projeto finalizado.")
 
