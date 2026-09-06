@@ -1,21 +1,46 @@
 from pathlib import Path
 import re
 
-from src.consolidacao import consolidar_notas
-
-
 pasta_projeto = Path(__file__).resolve().parent.parent
 pasta_boletins = pasta_projeto / "saidas" / "boletins"
 
 
 def limpar_nome_arquivo(texto):
+    """
+    Converte um texto em um nome mais seguro e padronizado para uso em
+    arquivos. A função transforma o texto em letras minúsculas, substitui
+    caracteres que não sejam letras ou números por "_" e remove "_" extras
+    no início ou no final do nome.
+    Essa função é usada na geração dos boletins para transformar informações
+    como turma e nome do aluno em um nome de arquivo adequado.
+    Exemplo:
+        "6º ano Matutino - João da Silva"
+        pode se tornar:
+        "6_ano_matutino_jo_o_da_silva"
+    Argumento:
+        texto (str): Texto original que será convertido para um formato
+        apropriado para compor o nome do arquivo.
+    Returns:
+        str: Texto limpo e padronizado para uso como nome de arquivo.
+    """
     texto = texto.lower()
     texto = re.sub(r"[^a-z0-9]+", "_", texto)
     return texto.strip("_")
 
 
-def gerar_boletins():
-    notas = consolidar_notas()
+def gerar_boletins(notas):
+    """
+    Gera os boletins individuais dos alunos usando as notas consolidadas.
+    O DataFrame recebido deve conter os dados necessários para identificar
+    cada aluno, sua turma, disciplinas, médias e situação final.
+    A função é chamada no módulo main.py, onde a variável `notas` é criada
+    a partir do retorno de `consolidar_notas()` e passada como argumento
+    para `gerar_boletins(notas)`.
+    Argumento:
+        notas (pd.DataFrame): DataFrame consolidado com as notas dos alunos,
+        recebido a partir da variável `notas` criada no módulo main.py.
+    """
+
     pasta_boletins.mkdir(parents=True, exist_ok=True)
 
     for (turma, aluno), tabela_aluno in notas.groupby(["turma", "aluno"]):
