@@ -9,12 +9,12 @@ def main():
 
     print("Consolidando notas...")
     notas = consolidar_notas()
-    salvar_relatorio_final(notas)
+    caminho_csv = salvar_relatorio_final(notas)
 
     print("Gerando boletins...")
     gerar_boletins(notas)
 
-    print("Projeto finalizado.")
+    print(f'Relatório: {caminho_csv}')
 
 
 if __name__ == "__main__":

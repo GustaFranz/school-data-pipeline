@@ -1,15 +1,18 @@
+from pathlib import Path
+
+import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from src import consolidacao
-
+PASTA_PROJETO = Path(__file__).resolve().parent
+CAMINHO_NOTAS = PASTA_PROJETO / "saidas" / "relatorios" / "notas_consolidadas.csv"
 
 st.set_page_config(page_title="School Data Pipeline", layout="wide")
 
 st.title("School Data Pipeline")
 st.caption("Colegio Caminhos do Futuro — dados ficticios")
 
-notas = consolidacao.consolidar_notas()
+notas = pd.read_csv(CAMINHO_NOTAS, encoding="utf-8-sig")
 
 turmas = sorted(notas["turma"].unique())
 turma_selecionada = st.sidebar.selectbox("Turma", turmas)

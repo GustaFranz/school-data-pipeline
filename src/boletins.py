@@ -1,9 +1,6 @@
 from pathlib import Path
 import re
 
-from src.consolidacao import consolidar_notas
-
-
 pasta_projeto = Path(__file__).resolve().parent.parent
 pasta_boletins = pasta_projeto / "saidas" / "boletins"
 
