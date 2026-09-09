@@ -4,6 +4,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from src.boletins import selecionar_boletim
+
 PASTA_PROJETO = Path(__file__).resolve().parent
 CAMINHO_NOTAS = (
     PASTA_PROJETO / "saidas" / "relatorios" / "notas_consolidadas.csv"
@@ -43,6 +45,12 @@ turma = st.selectbox("Turma",
                      key="boletim_turma")
 
 dados = notas.loc[notas["turma"] == turma]
+
+alunos = sorted(dados["aluno"].dropna().unique())
+
+aluno = st.selectbox("Aluno",
+                     options=alunos,
+                     key="boletim_aluno")
 
 media_geral = dados["media"].mean()
 total_alunos = dados["aluno"].nunique()
