@@ -37,10 +37,12 @@ st.caption("Dados ficticios")
 
 notas = carregar_notas()
 
-turmas = sorted(notas["turma"].unique())
-turma_selecionada = st.sidebar.selectbox("Turma", turmas)
+turmas = sorted(notas["turma"].dropna().unique())
+turma = st.selectbox("Turma",
+                     options=turmas,
+                     key="boletim_turma")
 
-dados = notas[notas["turma"] == turma_selecionada]
+dados = notas.loc[notas["turma"] == turma]
 
 media_geral = dados["media"].mean()
 total_alunos = dados["aluno"].nunique()
