@@ -5,14 +5,37 @@ import plotly.express as px
 import streamlit as st
 
 PASTA_PROJETO = Path(__file__).resolve().parent
-CAMINHO_NOTAS = PASTA_PROJETO / "saidas" / "relatorios" / "notas_consolidadas.csv"
+CAMINHO_NOTAS = (
+    PASTA_PROJETO / "saidas" / "relatorios" / "notas_consolidadas.csv"
+    )
 
-st.set_page_config(page_title="School Data Pipeline", layout="wide")
+# O pipeline prepara, valida e consolida os dados; o dashboard apenas consome
+# o resultado já pronto para exibir filtros, métricas, gráficos e tabelas.
+# Essa separação reduz acoplamento entre processamento e interface. Também
+# evita reprocessar todas as fontes sempre que o Streamlit fizer um rerun.
+# Além disso, facilita testes, manutenção e futuras mudanças na origem dos
+# dados. Como o Streamlit roda separadamente, ele não compartilha variáveis
+# do main.py.
+
+@st.cache_data
+def carregar_notas():
+    """Carrega o arquivo consolidado de notas e mantém o resultado em cache."""
+    return pd.read_csv(
+        CAMINHO_NOTAS,
+        encoding="utf-8-sig",
+    )
+
+
+st.set_page_config(
+    page_title="School Data Pipeline",
+    layout="wide")
 
 st.title("School Data Pipeline")
-st.caption("Colegio Caminhos do Futuro — dados ficticios")
+st.subheader("Colegio Caminhos do Futuro")
+st.caption("Dados ficticios")
 
-notas = pd.read_csv(CAMINHO_NOTAS, encoding="utf-8-sig")
+
+notas = carregar_notas()
 
 turmas = sorted(notas["turma"].unique())
 turma_selecionada = st.sidebar.selectbox("Turma", turmas)
@@ -26,7 +49,7 @@ percentual_acima = (dados["media"] >= 6).mean() * 100
 percentual_abaixo = (dados["media"] < 6).mean() * 100
 
 media_disciplina = (
-    dados.groupby("disciplina", as_index=False)["media"]
+    dados.groupby("disciplina", as_index=False)[["media"]]
     .mean()
     .sort_values("media", ascending=False)
 )
@@ -52,11 +75,12 @@ fig = px.bar(
     x="disciplina",
     y="media",
     title="Media por disciplina",
-    text_auto=".1f",
+    text_auto=".1f"
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
 st.subheader("Alunos em recuperacao")
 recuperacao = dados[dados["situacao"] == "Recuperacao"]
-st.dataframe(recuperacao[["aluno", "disciplina", "media"]], use_container_width=True)
+st.dataframe(recuperacao[["aluno", "disciplina", "media"]],
+             use_container_width=True)

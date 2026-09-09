@@ -19,9 +19,6 @@ COLUNAS_BOLETIM = [
 def limpar_nome_arquivo(texto):
     """
     Converte um texto em um nome seguro para ser utilizado em arquivos.
-    A função é usada principalmente para transformar nomes de alunos,
-    turmas ou combinações desses valores em nomes adequados para arquivos
-    CSV ou ZIP.
     Exemplo: "6º ano Matutino - João da Silva"
     pode se transformar aproximadamente em:
     "6_ano_matutino_joao_da_silva"
