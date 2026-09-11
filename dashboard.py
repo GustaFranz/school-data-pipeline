@@ -91,7 +91,7 @@ aluno = st.selectbox(
     placeholder="Selecionar aluno"
 )
 
-if aluno is None:
+if turma is None:
     st.stop()
 
 # Seleciona somente as notas do aluno escolhido.
@@ -115,7 +115,21 @@ st.caption(turma)
 st.dataframe(
     tabela_aluno,
     hide_index=True,
-    width="stretch",
+    width=1400,
+    column_config={
+        "disciplina": st.column_config.TextColumn(
+            "Disciplina", width="medium"),
+        "nota_simulado": st.column_config.NumberColumn(
+            "Simulado", width="medium", format="%.1f"),
+        "nota_prova": st.column_config.NumberColumn(
+            "Prova", width="medium", format="%.1f"),
+        "nota_projeto": st.column_config.NumberColumn(
+            "Projeto", width="medium", format="%.1f"),
+        "media": st.column_config.NumberColumn(
+            "Média", width="medium", format="%.1f"),
+        "situacao": st.column_config.TextColumn(
+            "Situação", width="medium"),
+    }
 )
 
 
