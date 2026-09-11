@@ -63,9 +63,13 @@ turmas = sorted(
 turma = st.selectbox(
     "Turma",
     options=turmas,
-    key="boletim_turma"
+    key="boletim_turma",
+    index=None,
+    placeholder="Selecione uma turma"
 )
 
+if turma is None:
+    st.stop()
 
 # Mantém apenas as linhas da turma selecionada.
 dados = notas.loc[
@@ -82,9 +86,13 @@ alunos = sorted(
 aluno = st.selectbox(
     "Aluno",
     options=alunos,
-    key="boletim_aluno"
+    key="boletim_aluno",
+    index=None,
+    placeholder="Selecionar aluno"
 )
 
+if aluno is None:
+    st.stop()
 
 # Seleciona somente as notas do aluno escolhido.
 try:
