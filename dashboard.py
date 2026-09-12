@@ -96,46 +96,43 @@ aluno = st.selectbox(
     placeholder="Selecionar aluno"
 )
 
-if turma is None:
-    st.stop()
+if aluno is not None:
 
-# Seleciona somente as notas do aluno escolhido.
-try:
-    tabela_aluno = selecionar_boletim(
-        notas,
-        turma,
-        aluno,
-    )
+    try:
+        tabela_aluno = selecionar_boletim(
+            notas,
+            turma,
+            aluno,
+        )
 
-except ValueError as erro:
-    # Exibe uma mensagem amigável caso nenhum boletim seja encontrado.
-    st.warning(str(erro))
-    st.stop()
+    except ValueError as erro:
+        # Exibe uma mensagem amigável caso nenhum boletim seja encontrado.
+        st.warning(str(erro))
 
+    else:
+        # Exibe o boletim individual.
+        st.subheader(f"Boletim — {aluno}")
+        st.caption(turma)
 
-# Exibe o boletim individual.
-st.subheader(f"Boletim — {aluno}")
-st.caption(turma)
-
-st.dataframe(
-    tabela_aluno,
-    hide_index=True,
-    width=1400,
-    column_config={
-        "disciplina": st.column_config.TextColumn(
-            "Disciplina", width="medium"),
-        "nota_simulado": st.column_config.NumberColumn(
-            "Simulado", width="medium", format="%.1f"),
-        "nota_prova": st.column_config.NumberColumn(
-            "Prova", width="medium", format="%.1f"),
-        "nota_projeto": st.column_config.NumberColumn(
-            "Projeto", width="medium", format="%.1f"),
-        "media": st.column_config.NumberColumn(
-            "Média", width="medium", format="%.1f"),
-        "situacao": st.column_config.TextColumn(
-            "Situação", width="medium"),
-    }
-)
+        st.dataframe(
+            tabela_aluno,
+            hide_index=True,
+            width=1400,
+            column_config={
+                "disciplina": st.column_config.TextColumn(
+                    "Disciplina", width="medium"),
+                "nota_simulado": st.column_config.NumberColumn(
+                    "Simulado", width="medium", format="%.1f"),
+                "nota_prova": st.column_config.NumberColumn(
+                    "Prova", width="medium", format="%.1f"),
+                "nota_projeto": st.column_config.NumberColumn(
+                    "Projeto", width="medium", format="%.1f"),
+                "media": st.column_config.NumberColumn(
+                    "Média", width="medium", format="%.1f"),
+                "situacao": st.column_config.TextColumn(
+                    "Situação", width="medium"),
+            }
+        )
 
 
 # Indicadores gerais da turma selecionada.
