@@ -4,8 +4,13 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from src.boletins import selecionar_boletim
-
+from src.boletins import (
+    boletim_para_csv,
+    gerar_zip_turma,
+    limpar_nome_arquivo,
+    selecionar_boletim,
+)
+from src.consolidacao import consolidar_notas
 
 PASTA_PROJETO = Path(__file__).resolve().parent
 
