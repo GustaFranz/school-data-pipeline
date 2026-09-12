@@ -134,6 +134,19 @@ if aluno is not None:
             }
         )
 
+        nome = limpar_nome_arquivo(
+            f"{turma}_{aluno}")
+
+        csv_bytes = boletim_para_csv(
+            tabela_aluno)
+
+        st.download_button(
+            label="Baixar boletim (CSV)",
+            data=csv_bytes,
+            file_name=f"boletim_{nome}.csv",
+            mime="text/csv",
+            key="boletim_download_csv")
+
 
 # Indicadores gerais da turma selecionada.
 media_geral = dados["media"].mean()
