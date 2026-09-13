@@ -73,182 +73,194 @@ turma = st.selectbox(
     placeholder="Selecione uma turma"
 )
 
-if turma is None:
-    st.stop()
+if turma is not None:
 
-# Mantém apenas as linhas da turma selecionada.
-dados = notas.loc[
-    notas["turma"] == turma
+    # Mantém apenas as linhas da turma selecionada.
+    dados = notas.loc[
+        notas["turma"] == turma
 ]
 
 
-# Gera a lista de alunos apenas da turma escolhida.
-alunos = sorted(
-    dados["aluno"].dropna().unique()
-)
-
-# Widget dependente da turma selecionada.
-aluno = st.selectbox(
-    "Aluno",
-    options=alunos,
-    key="boletim_aluno",
-    index=None,
-    placeholder="Selecionar aluno"
-)
-
-if aluno is not None:
-
-    try:
-        tabela_aluno = selecionar_boletim(
-            notas,
-            turma,
-            aluno,
-        )
-
-    except ValueError as erro:
-        # Exibe uma mensagem amigável caso nenhum boletim seja encontrado.
-        st.warning(str(erro))
-
-    else:
-        # Exibe o boletim individual.
-        st.subheader(f"Boletim — {aluno}")
-        st.caption(turma)
-
-        st.dataframe(
-            tabela_aluno,
-            hide_index=True,
-            width=1400,
-            column_config={
-                "disciplina": st.column_config.TextColumn(
-                    "Disciplina", width="medium"),
-                "nota_simulado": st.column_config.NumberColumn(
-                    "Simulado", width="medium", format="%.1f"),
-                "nota_prova": st.column_config.NumberColumn(
-                    "Prova", width="medium", format="%.1f"),
-                "nota_projeto": st.column_config.NumberColumn(
-                    "Projeto", width="medium", format="%.1f"),
-                "media": st.column_config.NumberColumn(
-                    "Média", width="medium", format="%.1f"),
-                "situacao": st.column_config.TextColumn(
-                    "Situação", width="medium"),
-            }
-        )
-
-        nome = limpar_nome_arquivo(
-            f"{turma}_{aluno}")
-
-        csv_bytes = boletim_para_csv(
-            tabela_aluno)
-
-        st.download_button(
-            label="Baixar boletim (CSV)",
-            data=csv_bytes,
-            file_name=f"boletim_{nome}.csv",
-            mime="text/csv",
-            key="boletim_download_csv")
-
-
-# Indicadores gerais da turma selecionada.
-media_geral = dados["media"].mean()
-total_alunos = dados["aluno"].nunique()
-
-percentual_recuperacao = (
-    dados["situacao"].eq("Recuperacao").mean() * 100
-)
-
-percentual_acima = (
-    (dados["media"] >= 6).mean() * 100
-)
-
-percentual_abaixo = (
-    (dados["media"] < 6).mean() * 100
-)
-
-
-# Calcula a média de cada disciplina da turma.
-media_disciplina = (
-    dados.groupby(
-        "disciplina",
-        as_index=False
-    )[["media"]]
-    .mean()
-    .sort_values(
-        "media",
-        ascending=False
+    # Gera a lista de alunos apenas da turma escolhida.
+    alunos = sorted(
+        dados["aluno"].dropna().unique()
     )
+
+    # Widget dependente da turma selecionada.
+    aluno = st.selectbox(
+        "Aluno",
+        options=alunos,
+        key="boletim_aluno",
+        index=None,
+        placeholder="Selecionar aluno"
 )
 
+    if aluno is not None:
 
-# Como a tabela está ordenada, a primeira linha é a melhor e a última a pior.
-melhor = media_disciplina.iloc[0]
-pior = media_disciplina.iloc[-1]
+        try:
+            tabela_aluno = selecionar_boletim(
+                notas,
+                turma,
+                aluno,
+            )
+
+        except ValueError as erro:
+            # Exibe uma mensagem amigável caso nenhum boletim seja encontrado.
+            st.warning(str(erro))
+
+        else:
+            # Exibe o boletim individual.
+            st.subheader(f"Boletim — {aluno}")
+            st.caption(turma)
+
+            st.dataframe(
+                tabela_aluno,
+                hide_index=True,
+                width=1400,
+                column_config={
+                    "disciplina": st.column_config.TextColumn(
+                        "Disciplina", width="medium"),
+                    "nota_simulado": st.column_config.NumberColumn(
+                        "Simulado", width="medium", format="%.1f"),
+                    "nota_prova": st.column_config.NumberColumn(
+                        "Prova", width="medium", format="%.1f"),
+                    "nota_projeto": st.column_config.NumberColumn(
+                        "Projeto", width="medium", format="%.1f"),
+                    "media": st.column_config.NumberColumn(
+                        "Média", width="medium", format="%.1f"),
+                    "situacao": st.column_config.TextColumn(
+                        "Situação", width="medium"),
+                }
+            )
+
+            nome = limpar_nome_arquivo(
+                f"{turma}_{aluno}")
+
+            csv_bytes = boletim_para_csv(
+                tabela_aluno)
+
+            st.download_button(
+                label="Baixar boletim (CSV)",
+                data=csv_bytes,
+                file_name=f"boletim_{nome}.csv",
+                mime="text/csv",
+                key="boletim_download_csv")
+
+    zip_bytes = gerar_zip_turma(notas, turma)
+
+    st.download_button(
+        label="Baixar todos da turma",
+        data=zip_bytes,
+        file_name=(
+            "boletins_"
+            f"{limpar_nome_arquivo(turma)}"
+            ".zip"
+        ),
+        mime="application/zip",
+        key="boletim_download_zip",
+    )
+
+    # Indicadores gerais da turma selecionada.
+    media_geral = dados["media"].mean()
+    total_alunos = dados["aluno"].nunique()
+
+    percentual_recuperacao = (
+        dados["situacao"].eq("Recuperacao").mean() * 100
+    )
+
+    percentual_acima = (
+        (dados["media"] >= 6).mean() * 100
+    )
+
+    percentual_abaixo = (
+        (dados["media"] < 6).mean() * 100
+    )
 
 
-# KPIs principais.
-col1, col2, col3 = st.columns(3)
-
-col1.metric(
-    "Media geral",
-    f"{media_geral:.1f}"
-)
-
-col2.metric(
-    "Total de alunos",
-    total_alunos
-)
-
-col3.metric(
-    "% em recuperacao",
-    f"{percentual_recuperacao:.1f}%"
-)
+    # Calcula a média de cada disciplina da turma.
+    media_disciplina = (
+        dados.groupby(
+            "disciplina",
+            as_index=False
+        )[["media"]]
+        .mean()
+        .sort_values(
+            "media",
+            ascending=False
+        )
+    )
 
 
-# KPIs complementares.
-col4, col5 = st.columns(2)
-
-col4.metric(
-    "% acima da media",
-    f"{percentual_acima:.1f}%"
-)
-
-col5.metric(
-    "% abaixo da media",
-    f"{percentual_abaixo:.1f}%"
-)
+    # Como a tabela está ordenada, a primeira linha é a melhor e a última a pior.
+    melhor = media_disciplina.iloc[0]
+    pior = media_disciplina.iloc[-1]
 
 
-# Destaca a melhor e a pior disciplina da turma.
-st.caption(
-    f"Melhor disciplina: {melhor['disciplina']} ({melhor['media']:.1f}) · "
-    f"Pior disciplina: {pior['disciplina']} ({pior['media']:.1f})"
-)
+    # KPIs principais.
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "Media geral",
+        f"{media_geral:.1f}"
+    )
+
+    col2.metric(
+        "Total de alunos",
+        total_alunos
+    )
+
+    col3.metric(
+        "% em recuperacao",
+        f"{percentual_recuperacao:.1f}%"
+    )
 
 
-# Gráfico com a média da turma por disciplina.
-fig = px.bar(
-    media_disciplina,
-    x="disciplina",
-    y="media",
-    title="Media por disciplina",
-    text_auto=".1f"
-)
+    # KPIs complementares.
+    col4, col5 = st.columns(2)
 
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
+    col4.metric(
+        "% acima da media",
+        f"{percentual_acima:.1f}%"
+    )
+
+    col5.metric(
+        "% abaixo da media",
+        f"{percentual_abaixo:.1f}%"
+    )
 
 
-# Filtra e exibe apenas os registros em recuperação.
-st.subheader("Alunos em recuperacao")
+    # Destaca a melhor e a pior disciplina da turma.
+    st.caption(
+        f"Melhor disciplina: {melhor['disciplina']} ({melhor['media']:.1f}) · "
+        f"Pior disciplina: {pior['disciplina']} ({pior['media']:.1f})"
+    )
 
-recuperacao = dados[
-    dados["situacao"] == "Recuperacao"
-]
 
-st.dataframe(
-    recuperacao[
-        ["aluno", "disciplina", "media"]
-    ],
-    use_container_width=True
-)
+    # Gráfico com a média da turma por disciplina.
+    fig = px.bar(
+        media_disciplina,
+        x="disciplina",
+        y="media",
+        title="Media por disciplina",
+        text_auto=".1f"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+
+    # Filtra e exibe apenas os registros em recuperação.
+    st.subheader("Alunos em recuperacao")
+
+    recuperacao = dados[
+        dados["situacao"] == "Recuperacao"
+    ]
+
+    st.dataframe(
+        recuperacao[
+            ["aluno", "disciplina", "media"]
+        ],
+        use_container_width=True
+    )
