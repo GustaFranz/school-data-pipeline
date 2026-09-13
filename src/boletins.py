@@ -281,7 +281,7 @@ def gerar_zip_turma(
     # devem usar o algoritmo de compressão DEFLATE.
     with ZipFile(
         memoria,
-        mode="w", 
+        mode="w",
         compression=ZIP_DEFLATED,
 
     ) as arquivo_zip:
