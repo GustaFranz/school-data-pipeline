@@ -26,7 +26,7 @@ Simula a rotina de uma coordenação escolar com um **pipeline ponta a ponta**:
 1. **Automatizar o portal** — com PyAutoGUI, o sistema acessa o portal local, faz login e baixa os CSVs de simulado simulando a interação humana (RPA).
 2. **Processar os dados** — lê notas de CSV, Excel e PDF e consolida tudo em uma base única.
 3. **Aplicar regras pedagógicas** — calcula médias ponderadas e define aprovação ou recuperação.
-4. **Gerar entregas** — produz boletins individuais e um dashboard interativo com indicadores da turma.
+4. **Disponibilizar resultados** — salva a base consolidada em CSV e oferece, no dashboard, boletins individuais para download em CSV ou um arquivo ZIP com todos os boletins da turma selecionada.
 
 **Escola fictícia:** Colégio Caminhos do Futuro  
 **Turmas:** 6º, 7º e 8º ano matutino
@@ -38,11 +38,13 @@ Simula a rotina de uma coordenação escolar com um **pipeline ponta a ponta**:
 ```mermaid
 flowchart LR
   A[Portal HTML] --> B[CSV simulado]
-  C[Excel provas] --> D[Consolidacao]
+  B --> D[Consolidação]
+  C[Excel provas] --> D
   E[PDF projetos] --> D
   D --> F[CSV consolidado]
-  D --> G[Boletins HTML]
-  D --> H[Dashboard Streamlit]
+  F --> G[Dashboard Streamlit]
+  G --> H[Boletim CSV individual]
+  G --> I[ZIP de boletins por turma]
 ```
 
 ## Progresso
@@ -91,11 +93,11 @@ Registro completo por desafio em **[detalhamento.md](detalhamento.md)**.
   </tr>
   <tr>
     <td width="50%"><img src="docs/capturas/03-notas-consolidadas.png" alt="CSV consolidado com médias" width="100%"></td>
-    <td width="50%"><img src="docs/capturas/04-boletim-aluno.png" alt="Boletim HTML por aluno" width="100%"></td>
+    <td width="50%"><img src="docs/capturas/04-boletim-aluno.png" alt="Boletim individual em HTML da primeira versão" width="100%"></td>
   </tr>
   <tr>
     <td width="50%" align="center"><sub>Notas unidas por turma, aluno e disciplina.</sub></td>
-    <td width="50%" align="center"><sub>Documento simples para conferência.</sub></td>
+    <td width="50%" align="center"><sub>Boletim individual em HTML gerado na primeira versão do projeto.</sub></td>
   </tr>
   <tr>
     <td colspan="2" align="center"><strong>Dashboard escolar</strong></td>
@@ -140,16 +142,43 @@ O script [`src/automacao_portal.py`](src/automacao_portal.py) abre o portal no C
   </tr>
 </table>
 
+
 ### Como executar
+
+Instale as dependências:
+
+```bash
+pip install -r requirements.txt
+```
+
+Execute o fluxo completo — automação do portal e consolidação das notas:
 
 ```bash
 python main.py
-python -m src.consolidacao
-python -m src.boletins
+```
+
+Esse comando gera ou atualiza o arquivo:
+
+```text
+saidas/relatorios/notas_consolidadas.csv
+```
+
+Em seguida, abra o dashboard:
+
+```bash
 streamlit run dashboard.py
 ```
 
+No dashboard, selecione uma turma. Você pode baixar o boletim individual de um aluno em CSV ou baixar os boletins de todos os alunos da turma em um arquivo ZIP.
+
+Se os arquivos de entrada já estiverem disponíveis e você quiser apenas consolidar os dados, sem executar a automação do portal, use:
+
+```bash
+python -m src.consolidacao
+```
+
 Requisitos: Chrome instalado no caminho padrão (para o RPA) e dependências em `requirements.txt`.
+
 
 ## Como construir o projeto
 
@@ -184,7 +213,6 @@ school-data-pipeline/
 ├── dashboard.py
 ├── main.py
 ├── saidas/
-│   ├── boletins/
 │   ├── relatorios/
 │   └── prints/
 ├── detalhamento.md

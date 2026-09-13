@@ -1,5 +1,4 @@
 from src.automacao_portal import executar_automacao
-from src.boletins import gerar_boletins
 from src.consolidacao import consolidar_notas, salvar_relatorio_final
 
 
@@ -10,9 +9,6 @@ def main():
     print("Consolidando notas...")
     notas = consolidar_notas()
     caminho_csv = salvar_relatorio_final(notas)
-
-    print("Gerando boletins...")
-    gerar_boletins(notas)
 
     print(f'Relatório: {caminho_csv}')
 

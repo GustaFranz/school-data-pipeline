@@ -46,7 +46,7 @@ Este projeto combina três camadas de um pipeline de dados escolares:
 |--------|-----------|
 | **Interface (RPA)** | PyAutoGUI simula a interação humana no portal local — login, navegação e download dos CSVs de simulado. |
 | **Dados** | Leitura e consolidação de CSV, Excel e PDF em uma base única, com cálculo de médias e regras pedagógicas. |
-| **Saída** | Geração automática de boletins individuais e dashboard interativo com indicadores das turmas. |
+| **Saída** | Base consolidada em CSV e dashboard interativo com indicadores, download individual de boletim em CSV e download em ZIP por turma. |
 
 Cenário inspirado na rotina escolar: várias fontes de nota, portal sem API e tarefas repetitivas que podem ser automatizadas.
 
@@ -265,17 +265,18 @@ Base consolidada com média e situação por aluno e disciplina.
 
 ---
 
-## Desafio 6 — Geração de boletins
+## Desafio 6 — Disponibilização de boletins
 
 ### Contexto
 
-A coordenação precisa de um documento individual por aluno, claro o suficiente para conferência e comunicação.
+A coordenação precisa consultar o desempenho individual de cada aluno e baixar esse resultado para conferência ou compartilhamento.
 
 ### O que o sistema deve fazer
 
-- Gerar um boletim por aluno com notas, médias e situação final.
-- Produzir arquivos em formato simples e legível, abrível no navegador na primeira versão.
-- Organizar a saída em pasta dedicada.
+- Exibir o boletim de um aluno selecionado no dashboard.
+- Apresentar notas, médias e situação final.
+- Permitir o download do boletim individual em CSV.
+- Preparar o arquivo para download sem criar arquivos temporários no projeto.
 
 ### Entradas
 
@@ -283,12 +284,13 @@ Base consolidada com médias e situação.
 
 ### Saídas esperadas
 
-Boletins individuais em pasta de saída (ex.: `saidas/boletins/`).
+Boletim individual disponível para download em CSV no dashboard. O arquivo é preparado em memória e o navegador define o local onde será salvo.
 
 ### Critérios de aceite
 
-- [x] Existe um arquivo por aluno.
-- [x] Todas as disciplinas aparecem no boletim.
+- [x] É possível selecionar uma turma e um aluno no dashboard.
+- [x] Todas as disciplinas, notas, médias e situações aparecem no boletim.
+- [x] É possível baixar o boletim individual em CSV.
 - [x] Médias e situação conferem em uma amostra verificada manualmente.
 
 ### Status
@@ -297,11 +299,10 @@ Boletins individuais em pasta de saída (ex.: `saidas/boletins/`).
 
 ### Aprendizados
 
-- Gerei HTML simples, aberto no navegador, priorizando legibilidade em vez de layout elaborado.
-- O agrupamento por turma e aluno (`groupby`) produz um arquivo por estudante em `saidas/boletins/`.
-- Montar a tabela linha a linha dentro de uma string HTML exigiu cuidado para não perder colunas ou repetir dados.
-- Esta etapa aumentou a densidade do projeto: passei de manipular tabelas a produzir documento individual para cada aluno.
-- Pretendo revisitar os boletins no futuro, inclusive para evoluir para PDF na v2.
+- Passei da geração de arquivos HTML para boletins CSV disponibilizados diretamente no dashboard.
+- Cada boletim reúne disciplina, notas, média e situação do aluno selecionado.
+- O CSV é criado em memória, sem gravar arquivos temporários no projeto.
+- A codificação UTF-8 com BOM facilita a abertura dos arquivos no Excel sem perder acentos.
 
 ---
 
@@ -319,6 +320,8 @@ Além dos boletins individuais, a coordenação precisa enxergar o desempenho da
   - percentual de alunos acima e abaixo da média;
   - disciplinas com melhor e pior desempenho;
   - alunos em recuperação.
+- Permitir o download do boletim CSV de um aluno selecionado.
+- Permitir o download, em ZIP, dos boletins de todos os alunos da turma selecionada.
 
 ### Entradas
 
@@ -326,13 +329,17 @@ Base consolidada com médias e situação.
 
 ### Saídas esperadas
 
-Dashboard interativo aberto no navegador.
+- Dashboard interativo aberto no navegador.
+- Download individual de boletim em CSV.
+- Download em lote dos boletins da turma em arquivo ZIP.
 
 ### Critérios de aceite
 
 - [x] O painel abre localmente sem erro.
 - [x] Os indicadores refletem os dados consolidados.
 - [x] É possível explorar a visão geral ou filtrar por turma.
+- [x] É possível baixar o boletim individual do aluno selecionado em CSV.
+- [x] É possível baixar os boletins de toda a turma em arquivo ZIP.
 
 ### Status
 
